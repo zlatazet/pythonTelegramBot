@@ -18,27 +18,7 @@ channel_id = '@academyOfGamesBot'
 quote_api_url = 'https://api.quotable.io/random'
 
 
-# Customization options for the image
-image_width = 1080  # Instagram post width
-image_height = 1080  # Instagram post height
-background_color = (0, 0, 0)  # RGB value for black
-text_color = (255, 255, 255)  # RGB value for white
-font_size = 48
-text_padding = 50  # Padding for left and right edges
-
-# Logo customization
-logo_text = "Your Logo"  # Replace with your logo text
-logo_font_size = 64
-logo_text_color = (255, 255, 255)  # RGB value for white
-
-
 def get_daily_horoscope(sign: str, day: str) -> dict:
-    """Get daily horoscope for a zodiac sign.
-    Keyword arguments:
-    sign:str - Zodiac sign
-    day:str - Date in format (YYYY-MM-DD) OR TODAY OR TOMORROW OR YESTERDAY
-    Return:dict - JSON data
-    """
     url = "https://horoscope-app-api.vercel.app/api/v1/get-horoscope/daily"
     params = {"sign": sign, "day": day}
     response = requests.get(url, params)
@@ -50,6 +30,7 @@ def get_daily_horoscope(sign: str, day: str) -> dict:
 def send_welcome(message):
     bot.reply_to(message, "Hi! You\'ll receive daily quotes and horoscope from me :)")
 
+
 @bot.message_handler(commands=['happy_birthday'])
 def send_congratulation(message):
     # Replace 'path_to_your_photo.jpg' with the actual path to your photo file
@@ -57,8 +38,9 @@ def send_congratulation(message):
         bot.send_photo(message.chat.id, photo)
 
     # Send a text message as a reply
-    text_message = "\fDear Mom,\n\nHappy Birthday! 🎂🎉\nI want to tell you how much you mean to me. Your birthday is a special day, and it's not just about getting older, but it's a day to celebrate all the love and kindness you give.\nYou are strong, kind, and loving. You've helped me become who I am today, and I'm so thankful for that.\nI wish you a day filled with happiness, laughter, and lots of special moments. You deserve all the best things in life.\nHappy Birthday, Mom! I love you very much.\n\nWith love, Anastasiia🤍"
+    text_message = ("\fDear Mum,\n\nHappy Birthday! 🎂🎉\nI want to tell you how much you mean to me. Your birthday is a special day, and it's not just about getting older, but it's a day to celebrate all the love and kindness you give. You are strong, kind, and loving. You've helped me become who I am today, and I'm so thankful for that.\nI wish you a day filled with happiness, laughter, and lots of special moments. You deserve all the best things in life.Happy Birthday, Mom! I love you very much.\n\nWith love, Anastasiia🤍")
     bot.send_message(message.chat.id, text_message)
+
 
 # Add the /quote command handler
 @bot.message_handler(commands=['quote'])
@@ -84,7 +66,7 @@ def day_handler(message):
         message.chat.id, text, parse_mode="Markdown")
     bot.register_next_step_handler(
         sent_msg, fetch_horoscope, sign.capitalize())
- 
+
 
 def fetch_horoscope(message, sign):
     day = message.text
