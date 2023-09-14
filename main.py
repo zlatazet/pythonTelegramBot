@@ -2,8 +2,6 @@ import os
 import telebot
 import requests
 from io import BytesIO
-from PIL import Image, ImageDraw, ImageFont, ImageOps
-import textwrap
 
 # Retrieve the bot token from the environment variable
 BOT_TOKEN = os.environ.get('base')
@@ -20,10 +18,6 @@ channel_id = '@academyOfGamesBot'
 quote_api_url = 'https://api.quotable.io/random'
 
 
-# Font path
-font_path = 'path_to_your_font_file.ttf'  # Replace with your font path
-
-
 # Customization options for the image
 image_width = 1080  # Instagram post width
 image_height = 1080  # Instagram post height
@@ -36,6 +30,7 @@ text_padding = 50  # Padding for left and right edges
 logo_text = "Your Logo"  # Replace with your logo text
 logo_font_size = 64
 logo_text_color = (255, 255, 255)  # RGB value for white
+
 
 def get_daily_horoscope(sign: str, day: str) -> dict:
     """Get daily horoscope for a zodiac sign.
@@ -111,46 +106,11 @@ def get_daily_quote():
     return None
 
 
-# Function to create an image with the quote and logo
-def create_quote_image(quote):
-    image = Image.new('RGB', (image_width, image_height), color=background_color)
-    draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype(font_path, size=font_size)
-
-    # Wrap the quote text based on the available width
-    wrapped_lines = textwrap.wrap(quote, width=(image_width - 2 * text_padding) // font_size)
-    text_height = 0
-    for line in wrapped_lines:
-        line_width, line_height = draw.textsize(line, font=font)
-        text_height += line_height
-
-    y = (image_height - text_height) // 2
-
-# Draw the wrapped lines of the quote text
-    for line in wrapped_lines:
-        line_width, line_height = draw.textsize(line, font=font)
-        x = (image_width - line_width) // 2
-        draw.text((x, y), line, font=font, fill=text_color, align='center')
-        y += line_height
-
-    # Add logo using text
-    logo_font = ImageFont.truetype(font_path, size=logo_font_size)
-    logo_width, logo_height = draw.textsize(logo_text, font=logo_font)
-    logo_x = (image_width - logo_width) // 2
-    logo_y = (image_height - logo_height) - (text_height // 2) - 50  # Adjust the logo position as needed
-    draw.text((logo_x, logo_y), logo_text, font=logo_font, fill=logo_text_color, align='center')
-
-    return image
-
-
 # Define the publish_daily_quote() function outside of quote_handler()
 def publish_daily_quote():
     quote = get_daily_quote()
     if quote:
-        image = create_quote_image(quote)
-        image = image.resize((1080, 1080))  # Resize image for Instagram post
         with BytesIO() as bio:
-            image.save(bio, format='JPEG')
             bio.seek(0)
             bot.send_photo(chat_id=channel_id, photo=bio)
     else:
