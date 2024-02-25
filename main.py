@@ -3,20 +3,29 @@ import telebot
 import requests
 import json
 from telebot import types
+# from datetime import datetime, timedelta
+# import schedule
+# import time
+# import threading
 
 
 # Retrieve the bot token from the environment variable
 BOT_TOKEN = os.environ.get('base')
 
-bot = telebot.TeleBot("6668212969:AAGrGkLBLuXCXFUBs-PJCpEoB7Dms9Ui0g4")
+bot = telebot.TeleBot(BOT_TOKEN)
 
 channel_id = '@academyOfGamesBot'
+
+# Store reminders in a dictionary {chat_id: reminder_text}
+
 
 # API endpoints
 quote_api_url = 'https://api.quotable.io/random'
 weather_api_url = 'https://api.openweathermap.org/data/2.5/weather'
 currency_api_url = 'https://api.exchangerate-api.com/v4/latest/'
-reminder_api = {}
+
+# Store reminders in a dictionary {chat_id: reminder_text}
+reminder_jobs = {}
 
 
 # Function to fetch a daily quote from the API
@@ -136,31 +145,126 @@ def process_currency_command(message):
 
 
 # Function to set a reminder
-def process_reminder_command(message):
-    reminder = message.text
-    chat_id = message.chat.id
-    reminder_api[chat_id] = reminder
-    bot.send_message(chat_id, f"Reminder set: {reminder}")
+# def remind_user(message, text, delay):
+#     bot.send_message(message.chat.id, text)
+#     del reminder_jobs[message.chat.id]
+
+
+# def process_reminder_command(message):
+#     try:
+#         reminder_text = message.text
+
+#         # Split the input to get the time and day
+#         parts = reminder_text.split(" at ")
+
+#         if len(parts) != 2:
+#             raise ValueError("Invalid input")
+
+#         time_str = parts[1].strip()
+#         day_str = parts[0].strip()
+
+#         # Convert day string to datetime object
+#         today = datetime.today()
+#         days_dict = {
+#             "monday": 0,
+#             "tuesday": 1,
+#             "wednesday": 2,
+#             "thursday": 3,
+#             "friday": 4,
+#             "saturday": 5,
+#             "sunday": 6,
+#         }
+#         day_of_week = days_dict.get(day_str.lower())
+#         if day_of_week is None:
+#             raise ValueError("Invalid day")
+
+#         day_difference = (day_of_week - today.weekday()) % 7
+#         reminder_day = today + timedelta(days=day_difference)
+
+#         # Convert time string to datetime object
+#         reminder_time = datetime.strptime(time_str, "%I:%M %p").time()
+
+#         # Combine date and time to create reminder datetime
+#         reminder_datetime = datetime.combine(reminder_day, reminder_time)
+
+#         # Calculate delay in seconds
+#         current_time = datetime.now()
+#         delay = (reminder_datetime - current_time).total_seconds()
+
+#         # Check if delay is less than one second, cancel reminder
+#         if delay < 1:
+#             raise ValueError("Invalid delay")
+
+#         # Schedule the reminder
+#         reminder_jobs[message.chat.id] = schedule.every().seconds.do(
+#             remind_user, message, "Reminder: " + parts[0].strip(), delay
+#         )
+
+#         bot.send_message(message.chat.id, f"Reminder set: {reminder_text}")
+#     except Exception as e:
+#         bot.send_message(
+#             message.chat.id, f"""Invalid input for reminder.
+#        Please try again. Error: {e}"""
+#         )
+
+
+# # Function to schedule sending the reminder message
+# def schedule_message(reminder_time, chat_id):
+#     def send_reminder():
+#         try:
+#             reminder_text = reminder_jobs[chat_id]
+#             bot.send_message(chat_id, f"🕒 Reminder: {reminder_text}")
+#         except KeyError:
+#             # Handle case where reminder is deleted before it's sent
+#             pass
+
+#     # Calculate the delay until the reminder time
+#     now = datetime.now()
+#     delay = (reminder_time - now).total_seconds()
+
+#     # Check if the delay is less than one second
+#     if delay < 1:
+#         bot.send_message(chat_id, """Reminder canceled.
+#                          The specified time is too soon.""")
+#         return
+
+#     # Schedule the reminder message
+#     schedule.every().seconds.do(send_reminder).at(reminder_time
+#                                                   .strftime("%H:%M:%S"))
+
+#     # Start the scheduler in a separate thread (non-blocking)
+#     schedule_thread = threading.Thread(target=schedule.run_continuously)
+#     schedule_thread.start()
+
+
+# def check_reminder_jobs():
+#     while True:
+#         schedule.run_pending()
+#         time.sleep(1)
 
 
 # Function to send a message to all active users
 def send_message_to_all(message):
-    active_users = reminder_api.keys()
+    active_users = reminder_jobs.keys()
     for user_id in active_users:
         bot.send_message(user_id, message)
 
 
 def process_send_to_all_command(message):
-    message_to_send = message.text
-    send_message_to_all(message_to_send)
-    bot.send_message(message.chat.id, "Message sent to all active users.")
+    if message.from_user.id == 1084139144:
+        message_to_send = message.text
+        send_message_to_all(message_to_send)
+        bot.send_message(message.chat.id, "Message sent to all active users.")
+    else:
+        bot.send_message(message.chat.id,
+                         "You are not authorized to use this command.")
 
 
 # Function to get recommendations for movies
-def process_recommend_command(message):
-    preferences = message.text
-    bot.send_message(message.chat.id, f"""Recommendations for
-                     {preferences}: Action, Comedy, Drama""")
+# def process_recommend_command(message):
+#     preferences = message.text
+#     bot.send_message(message.chat.id, f"""Recommendations for
+#                      {preferences}: Action, Comedy, Drama""")
 
 
 @bot.message_handler(commands=['start', 'hello'])
@@ -171,14 +275,14 @@ def send_welcome(message):
                                               callback_data='weather')
     item_currency = types.InlineKeyboardButton('Convert Currency',
                                                callback_data='currency')
-    item_reminder = types.InlineKeyboardButton('Set Reminder',
-                                               callback_data='reminder')
-    item_recommend = types.InlineKeyboardButton('Recommendations',
-                                                callback_data='recommend')
+    # item_reminder = types.InlineKeyboardButton('Set Reminder',
+    #                                            callback_data='reminder')
+    # item_recommend = types.InlineKeyboardButton('Recommendations',
+    #                                             callback_data='recommend')
 
     markup.row(item_quote, item_weather)
-    markup.row(item_currency, item_reminder)
-    markup.row(item_recommend)
+    markup.row(item_currency)
+    # markup.row(item_recommend, item_reminder)
 
     bot.reply_to(message, "Hi! Choose an option:", reply_markup=markup)
 
@@ -193,7 +297,8 @@ def callback_handler(call):
     elif call.data == 'weather':
         bot.answer_callback_query(call.id)
         bot.send_message(call.message.chat.id,
-                         "Please enter the name of the city to get weather information:")
+                         """Please enter the name of the city to get weather
+                         information:""")
         bot.register_next_step_handler(call.message, process_weather_command)
     elif call.data == 'currency':
         bot.answer_callback_query(call.id)
@@ -201,16 +306,18 @@ def callback_handler(call):
                          """Enter amount, source currency,
                          and target currency (e.g., 100 USD EUR):""")
         bot.register_next_step_handler(call.message, process_currency_command)
-    elif call.data == 'reminder':
-        bot.answer_callback_query(call.id)
-        bot.send_message(call.message.chat.id,
-                         """Enter your reminder
-                         (e.g., 'Meeting at 2 PM on Friday'):""")
-        bot.register_next_step_handler(call.message, process_reminder_command)
-    elif call.data == 'recommend':
-        bot.answer_callback_query(call.id)
-        bot.send_message(call.message.chat.id, "Enter your preferences:")
-        bot.register_next_step_handler(call.message, process_recommend_command)
+    # elif call.data == 'reminder':
+    #     bot.answer_callback_query(call.id)
+    #     bot.send_message(call.message.chat.id,
+    #                      """Enter your reminder
+    #                      (e.g., 'Meeting at 2 PM on Friday'):""")
+    #     bot.register_next_step_handler(call.message,
+    #    process_reminder_command)
+    # elif call.data == 'recommend':
+    #     bot.answer_callback_query(call.id)
+    #     bot.send_message(call.message.chat.id, "Enter your preferences:")
+    #     bot.register_next_step_handler(call.message,
+    #    process_recommend_command)
     else:
         bot.send_message(call.message.chat.id,
                          "You are not authorized to use this command.")
@@ -246,11 +353,14 @@ def handle_message(message):
         pass
 
 
-@bot.message_handler(commands=['reminder'])
-def set_reminder_handler(message):
-    bot.send_message(message.chat.id, """Enter your reminder
-                     (e.g., 'Meeting at 2 PM on Friday'):""")
-    bot.register_next_step_handler(message, process_reminder_command)
+# @bot.message_handler(commands=["reminder"])
+# def set_reminder_handler(message):
+#     bot.send_message(
+#         message.chat.id,
+#         """Enter your reminder in the format:
+#         'Do at <time> on <day>' (e.g., 'Do at 5:57 AM on Sunday'):""",
+#     )
+#     bot.register_next_step_handler(message, process_reminder_command)
 
 
 @bot.message_handler(commands=['send_to_all'])
@@ -264,10 +374,10 @@ def send_to_all_handler(message):
                          "You are not authorized to use this command.")
 
 
-@bot.message_handler(commands=['joke'])
-def joke_handler(message):
-    # Implement a function to fetch jokes from an API and send to user
-    bot.send_message(message.chat.id, "Here's a joke for you!")
+# @bot.message_handler(commands=['joke'])
+# def joke_handler(message):
+#     # Implement a function to fetch jokes from an API and send to user
+#     bot.send_message(message.chat.id, "Here's a joke for you!")
 
 
 @bot.message_handler(commands=['quote'])
@@ -279,11 +389,11 @@ def quote_handler(message):
         bot.send_message(message.chat.id, "Unable to fetch daily quote.")
 
 
-@bot.message_handler(commands=['recommend'])
-def recommend_handler(message):
-    bot.send_message(message.chat.id,
-                     "Enter your movie or TV show preferences:")
-    bot.register_next_step_handler(message, process_recommend_command)
+# @bot.message_handler(commands=['recommend'])
+# def recommend_handler(message):
+#     bot.send_message(message.chat.id,
+#                      "Enter your movie or TV show preferences:")
+#     bot.register_next_step_handler(message, process_recommend_command)
 
 
 # Function to handle all other messages
