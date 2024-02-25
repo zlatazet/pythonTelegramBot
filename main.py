@@ -1,16 +1,14 @@
 import os
 import telebot
-from telebot import types
 import requests
-from requests.exceptions import ReadTimeout
-import time
 import json
+from telebot import types
 
 
 # Retrieve the bot token from the environment variable
 BOT_TOKEN = os.environ.get('base')
 
-bot = telebot.TeleBot("6668212969:AAEjEx1SD8_a84usXMOL89HnDU4KcSdvVLY")
+bot = telebot.TeleBot("6668212969:AAGrGkLBLuXCXFUBs-PJCpEoB7Dms9Ui0g4")
 
 channel_id = '@academyOfGamesBot'
 
@@ -98,21 +96,13 @@ def process_weather_command(message):
         latitude, longitude = coordinates
         weather_info = get_weather_by_coordinates(latitude, longitude)
         if weather_info:
-            bot.reply_to(message, weather_info)
+            bot.send_message(message.chat.id, weather_info)
         else:
             bot.reply_to(message, """Unable to fetch weather information.
                          Please try again later.""")
     else:
         bot.reply_to(message, """Unable to get coordinates for the city.
                      Please try again.""")
-
-
-@bot.message_handler(func=lambda message: True)
-def handle_message(message):
-    if message.text.startswith('/weather'):
-        ask_for_city(message)
-    else:
-        pass
 
 
 # Function to convert currency
@@ -173,25 +163,6 @@ def process_recommend_command(message):
                      {preferences}: Action, Comedy, Drama""")
 
 
-# Function for time to make API request
-def make_api_request(url):
-    retries = 3
-    delay = 5  # seconds
-    for _ in range(retries):
-        try:
-            response = requests.get(url, timeout=25)
-            response.raise_for_status()
-            return response.json()
-        except ReadTimeout:
-            print("Timeout occurred. Retrying...")
-            time.sleep(delay)
-            continue
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            break
-    return None
-
-
 @bot.message_handler(commands=['start', 'hello'])
 def send_welcome(message):
     markup = types.InlineKeyboardMarkup()
@@ -204,12 +175,10 @@ def send_welcome(message):
                                                callback_data='reminder')
     item_recommend = types.InlineKeyboardButton('Recommendations',
                                                 callback_data='recommend')
-    item_recipe = types.InlineKeyboardButton('Recipe Suggestions',
-                                             callback_data='recipe')
 
     markup.row(item_quote, item_weather)
     markup.row(item_currency, item_reminder)
-    markup.row(item_recommend, item_recipe)
+    markup.row(item_recommend)
 
     bot.reply_to(message, "Hi! Choose an option:", reply_markup=markup)
 
@@ -242,6 +211,9 @@ def callback_handler(call):
         bot.answer_callback_query(call.id)
         bot.send_message(call.message.chat.id, "Enter your preferences:")
         bot.register_next_step_handler(call.message, process_recommend_command)
+    else:
+        bot.send_message(call.message.chat.id,
+                         "You are not authorized to use this command.")
 
 
 @bot.message_handler(commands=['happy_birthday'])
@@ -264,6 +236,14 @@ def ask_for_city(message):
     text = "Please enter the name of the city to get weather information:"
     bot.reply_to(message, text)
     bot.register_next_step_handler(message, process_weather_command)
+
+
+@bot.message_handler(func=lambda message: True)
+def handle_message(message):
+    if message.text.startswith('/weather'):
+        ask_for_city(message)
+    else:
+        pass
 
 
 @bot.message_handler(commands=['reminder'])
@@ -315,5 +295,6 @@ def handle_all_messages(message):
 
 
 # Infinite polling to keep the bot running
+print("Starting polling...")
 bot.infinity_polling()
-response_data = make_api_request("YOUR_API_ENDPOINT")
+print("Bot stopped.")
