@@ -1,6 +1,0 @@
-module.exports = {
-    BOT_TOKEN: 'YOUR_BOT_TOKEN',
-    QUOTE_API_URL: 'https://api.quotable.io/random',
-    DB_URL: 'your_database_connection_string'
-  };
-  
